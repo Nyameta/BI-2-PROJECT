@@ -1,0 +1,117 @@
+## Rcode
+---
+title: "BI PROJECT"
+author: "Nyameta"
+date: "2023-11-29"
+output: html_document
+---
+
+# Diabetes Prediction Modeling in R
+
+## Introduction
+
+In this R Markdown document, we will develop and evaluate a predictive model for diabetes using a dataset of patient data. We will follow a structured approach, starting with data exploration and preprocessing, followed by model training and evaluation. Finally, we will optimize the model and ensemble different models to improve its performance.
+
+## Milestone 1: Data Exploration and Preprocessing
+
+Issue 1: Descriptive Statistics
+
+```R
+Load required libraries
+library(readr)
+library(readxl)
+
+Read the CSV file with read.csv
+diabetes_prediction_dataset <- read_excel("data/diabetes_prediction_dataset.xlsx")
+
+View the dataset
+View(diabetes_prediction_dataset)
+
+Dimensions of the dataset
+dim(diabetes_prediction_dataset)
+
+Data types of the variables
+sapply(diabetes_prediction_dataset, class)
+Universal and Multivariate Plots
+Load required libraries
+library(caret)
+
+Univariate plot to examine the distribution of numeric variables
+featurePlot(x = diabetes_prediction_dataset[, 2:4], y = diabetes_prediction_dataset[, 9], plot = "box")
+
+Correlation plot to visualize the relationships between numeric variables
+library(corrplot)
+corrplot(cor(diabetes_prediction_dataset[, 6:9]), method = "circle")
+
+## Milestone 2: Missing Values, Data Imputation, and Data Transformation
+
+Load required library
+library(dplyr)
+
+Check for missing values
+any(is.na(diabetes_prediction_dataset))
+
+Impute missing values if necessary
+
+## Milestone 3: Training the Model
+
+Split the dataset into training and testing sets
+train_index <- createDataPartition(diabetes_prediction_dataset$gender, p = 0.75, list = FALSE)
+diabetes_prediction_dataset_train <- diabetes_prediction_dataset[train_index, ]
+diabetes_prediction_dataset_test <- diabetes_prediction_dataset[-train_index, ]
+Classification with LDA and K-fold Cross Validation
+Define the training control for k-fold cross-validation
+train_control <- trainControl(method = "cv", number = 5)
+
+Train an LDA model
+diabetes_prediction_dateset_model_lda <-
+  caret::train(gender ~ .,
+                data = diabetes_prediction_dataset_train,
+                trControl = train_control,
+                na.action = na.omit,
+                method = "lda2",
+                metric = "Accuracy")
+
+Evaluate the LDA model
+print(diabetes_prediction_dateset_model_lda)
+Cross Validation
+Check if the outcome variable is a factor
+str(diabetes_prediction_dataset$diabetes)
+
+If the outcome variable is not a factor, convert it to one
+diabetes_prediction_dataset$diabetes <- as.factor(diabetes_prediction_dataset$diabetes)
+
+Set the seed for reproducibility
+set.seed(123)
+
+Define the training control for 10-fold cross-validation
+train_control <- trainControl(method = "cv", number = 10, search = "grid", classProbs = TRUE, summaryFunction = multiClassSummary)
+
+Train a Random Forest model
+library(randomForest)
+rf_model <- train(gender ~ .,
+                   data = diabetes_prediction_dataset_train,
+                   method = "rf",
+                   trControl = train_control)
+
+Make predictions on the testing set
+predictions <- predict(rf_model, newdata = diabetes_prediction_dataset_test)
+
+Train an SVM model
+library(e1071)
+svm_model <- train(gender ~ .,
+                  data = diabetes_prediction_dataset_train,
+                  method = "svmRadial",
+                  trControl = train_control)
+
+## Milestone 4: Hyperparameter Tuning and Ensembles Hyperparameter Tuning for Random Forest
+Define the grid of hyperparameters for mtry
+grid <- expand.grid(mtry = c(2, 4, 6, 8, 10))
+
+Set up the control parameters for grid search
+control <- trainControl(method = "cv", number = 5)
+
+## Milestone 5: Consolidation
+
+Save the trained LDA model
+saveRDS(diabetes_prediction_dateset_model_lda, "./model/saved_diabetes_prediction_dateset_model_lda.rds")
